@@ -1,8 +1,17 @@
-lex85
+# lex85
+
 A base85 encoding with stable
 lexicographic sorting to the raw bytes
 
+## lexicographic base85 alphabet
+```
+#$%&()*+-0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_abcdefghijklmnopqrstuvwxyz{|}
+```
+---
 We want to put bytes into ascii strings with more density then b64.
+
+4/3 blowup for b64 but only 5/4 blowup for lex85.
+
 Our target environment for lex85 is CSV, TSV, JSON, and programming language literal strings.
 If we look at how many bytes a char if encoded in json is their are
 93 chars that are encoded as a single byte.
@@ -39,8 +48,22 @@ we need to pick 85 chars for our alphabet
 giving us the alphabet
     `"#$%&()*+-0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_abcdefghijklmnopqrstuvwxyz{|}"`
 
-Note the alphabet is in lexicographic sort order this is important 
-since it allows for the encoded strings and decoded bytes to sort in the same order.
+> Note:
+> * Sort Order
+>
+>   The alphabet is in lexicographic sort order this is important since it allows for the encoded strings and decoded bytes to sort in the same order.
+>
+> * Fencepost
+>
+>   '!' and '~' are not in the lex85 alphabet but are in printable ascii so fencepost can be constructed
+>
+>   `"aa!"` will sort before `"aa#"`
+>
+>   `"aa~"` will sort after not only "aa}" but `"aa}}}}}}}}}}}}...`
+>
+>   Fenceposts allow programmers get exclusive ranges using only inclusive range queries.
+
+## encoding
 
 ```
  -------------------------------- 
@@ -55,10 +78,11 @@ i = (C1 * 85 ** 4) + (C2 * 85 ** 3) + (C3 * 85 ** 2) + (C4 * 85)+ C5
 i = (b1 << 24) + (b2 << 16) + (b3 << 8) + (b4 << 0)
 ```
 
-if the number of chars is not modulo 5 then pad with 84
-if the number of bytes is not modulo 4 then pad with 0
-for the conversions but
-then drop the pad from the output
+If the number of chars is not modulo 5 then pad with `b85(84)`
+
+If the number of bytes is not modulo 4 then pad with `0x00`
+
+Then drop the length of the pad from the output
 
 ```python
 base85_alphabet = "#$%&()*+-0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_abcdefghijklmnopqrstuvwxyz{|}" 
@@ -66,7 +90,7 @@ integer2character85 = base85_alphabet
 character2integer85 = {character: index for index, character in enumerate(base85_alphabet)}
 
 def encode85(buffer):
-    pad = (-(len(buffer) % -4))
+    pad = (-(len(buffer) % -4))  # bytes to get to multiple of 4
     buffer = buffer + b'\x00'*pad
     encoded = [''] * ((len(buffer)//4)*5)
     for i in range(0, len(buffer)//4):
@@ -84,8 +108,8 @@ def encode85(buffer):
     return ''.join(encoded)[:len(encoded)-pad]
 
 def decode85(string):
-    pad = (-(len(string) % -5))
-    string = string + '~'*pad
+    pad = (-(len(string) % -5))  # characters to get to multiple of 5
+    string = string + '}'*pad
     buffer = bytearray(len(string) // 5 * 4)
     for i in range(0, len(string) // 5):
         integer = (character2integer85[string[i * 5 + 0]] * (85 ** 4) +  
@@ -98,4 +122,23 @@ def decode85(string):
         buffer[i * 4 + 2] = integer >>  8 & 0xff
         buffer[i * 4 + 3] = integer >>  0 & 0xff
     return bytes(buffer[:len(buffer)-pad])
+```
+
+## Recommended syntax for tagging lex85
+prefix `l`
+```python
+# int literal stile
+# lxHU}#zJb 
+In [1]: 0x68656c6c6f  
+Out[1]: 448378203247
+
+# tagged string literal stile
+# l"HU}#zJb" 
+In [2]: b"\x68\x65\x6c\x6c\x6f"
+Out[2]: b'hello'
+
+# multibase stile
+# multibase.decode("lHU}#zJb") 
+In [3]: multibase.decode("f68656c6c6f")
+Out[3]: b'hello'
 ```

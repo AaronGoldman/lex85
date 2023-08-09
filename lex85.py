@@ -2,8 +2,8 @@ base85_alphabet = "#$%&()*+-0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_abcde
 integer2character85 = base85_alphabet
 character2integer85 = {character: index for index, character in enumerate(base85_alphabet)}
 
-def encode85(buffer):
-    pad = (-(len(buffer) % -4))
+def lex85encode(buffer):
+    pad = (-(len(buffer) % -4))  # bytes to get to multiple of 4
     buffer = buffer + b'\x00'*pad
     encoded = [''] * ((len(buffer)//4)*5)
     for i in range(0, len(buffer)//4):
@@ -20,8 +20,8 @@ def encode85(buffer):
             return OverflowError(f"{integer} > uint32_max")
     return ''.join(encoded)[:len(encoded)-pad]
 
-def decode85(string):
-    pad = (-(len(string) % -5))
+def lex85decode(string):
+    pad = (-(len(string) % -5))  # characters to get to multiple of 5
     string = string + '}'*pad
     buffer = bytearray(len(string) // 5 * 4)
     for i in range(0, len(string) // 5):
@@ -42,8 +42,8 @@ def test():
         expected_bytes_hex, expected_b85 = test.strip("\n").split(" ")
         expected_bytes = bytes.fromhex(expected_bytes_hex)
 
-        calculated_b85 = encode85(expected_bytes)
-        calculated_bytes = decode85(expected_b85)
+        calculated_b85 = lex85encode(expected_bytes)
+        calculated_bytes = lex85decode(expected_b85)
         if calculated_b85 == expected_b85:
             print(".", end="")
         else:
