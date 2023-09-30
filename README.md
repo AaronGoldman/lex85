@@ -57,9 +57,9 @@ giving us the alphabet
 >
 >   '!' and '~' are not in the lex85 alphabet but are in printable ascii so fencepost can be constructed
 >
->   `"aa!"` will sort before `"aa#"`
+>   `"aa!"` will sort before `"aa#"` and after `"aa"`
 >
->   `"aa~"` will sort after not only "aa}" but `"aa}}}}}}}}}}}}...`
+>   `"aa~"` will sort after not only "aa}" but `"aa}}}}}}}}}}}}...` and before `"ab"`
 >
 >   Fenceposts allow programmers get exclusive ranges using only inclusive range queries.
 
@@ -128,17 +128,17 @@ def decode85(string):
 prefix `l`
 ```python
 # int literal stile
-# lxHU}#zJb 
-In [1]: 0x68656c6c6f  
-Out[1]: 448378203247
+0lHU}#zJb = 448378203247
+# like
+0x68656c6c6f = 448378203247
 
 # tagged string literal stile
-# l"HU}#zJb" 
-In [2]: b"\x68\x65\x6c\x6c\x6f"
-Out[2]: b'hello'
+l"HU}#zJb" = b'hello'
+# like
+b"\x68\x65\x6c\x6c\x6f" = b'hello'
 
 # multibase stile
-# multibase.decode("lHU}#zJb") 
-In [3]: multibase.decode("f68656c6c6f")
-Out[3]: b'hello'
+multibase.decode("lHU}#zJb")  = b'hello'
+#like
+multibase.decode("f68656c6c6f") = b'hello'
 ```
