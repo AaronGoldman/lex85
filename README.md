@@ -43,7 +43,7 @@ we need to pick 85 chars for our alphabet
 * we drop `47: '/'` since it is a delimiter
 * we drop `92: '\'` since it is the json string escaping
 * we drop ```96: '`'``` since it is a string container
-* we drop `126: '~'` to reserve it as grater then all lex85 chars
+* we drop `126: '~'` to reserve it as greater than all lex85 chars
 
 giving us the alphabet
     `"#$%&()*+-0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_abcdefghijklmnopqrstuvwxyz{|}"`
